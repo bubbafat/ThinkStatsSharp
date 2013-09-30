@@ -6,16 +6,15 @@ using System.Threading.Tasks;
 
 namespace ThinkStats
 {
-    public class Pmf<T>
-        where T: IComparable<T>
+    public class Pmf
     {
-        private readonly Dictionary<T, decimal> _data;
+        private readonly Dictionary<decimal, decimal> _data;
         private readonly int _precision;
 
-        private Pmf(Hist<T> hist, int precision)
+        private Pmf(Hist<decimal> hist, int precision)
         {
             _precision = precision;
-            _data = new Dictionary<T, decimal>(hist.Comparer);
+            _data = new Dictionary<decimal, decimal>(hist.Comparer);
             foreach (var item in hist.Items)
             {
                 _data[item.Key] = item.Value;
@@ -35,25 +34,25 @@ namespace ThinkStats
 
         public decimal Total()
         {
-            return _data.Sum(x => x.Value);
+            return Normalize(_data.Sum(x => x.Value), _precision);
         }
 
-        public IEnumerable<T> Values()
+        public IEnumerable<decimal> Values()
         {
             return _data.Select(x => x.Key);
         }
 
         public IEnumerable<decimal> Frequencies()
         {
-            return _data.Select(x => x.Value);
+            return _data.Select(x => Normalize(x.Value, _precision));
         }
 
-        public decimal Prob(T value)
+        public decimal Prob(decimal value)
         {
-            return GetFrequencyOrZero(value);
+            return Normalize(GetFrequencyOrZero(value), _precision);
         }
 
-        private decimal GetFrequencyOrZero(T value)
+        private decimal GetFrequencyOrZero(decimal value)
         {
             decimal freq;
             if (!_data.TryGetValue(value, out freq))
@@ -61,29 +60,42 @@ namespace ThinkStats
                 freq = 0;
             }
 
-            return freq;
+            return Normalize(freq, _precision);
         }
 
-        public void Incr(T value, decimal delta)
+        public void Incr(decimal value, decimal delta)
         {
             decimal current = GetFrequencyOrZero(value);
             _data[value] = current + delta;
         }
 
-        public void Mult(T value, decimal multiple)
+        public void Mult(decimal value, decimal multiple)
         {
             decimal current = GetFrequencyOrZero(value);
             _data[value] = current * multiple;
         }
 
-        public static Pmf<T> MakePmfFromList(IEnumerable<T> values, IEqualityComparer<T> comparer = null, int precision = 300)
+        public decimal Mean()
         {
-            return MakePmfFromHist(new Hist<T>(values, comparer ?? EqualityComparer<T>.Default), precision);
+            return Normalize(_data.Sum(data => (data.Key*data.Value)), _precision);
         }
 
-        public static Pmf<T> MakePmfFromHist(Hist<T> hist, int precision = 300)
+        public static Pmf MakePmfFromList(IEnumerable<decimal> values, IEqualityComparer<decimal> comparer = null, int precision = c_defaultPrecision)
         {
-            return new Pmf<T>(hist, precision);
+            return MakePmfFromHist(new Hist<decimal>(values, comparer ?? EqualityComparer<decimal>.Default), precision);
         }
+
+        public static Pmf MakePmfFromHist(Hist<decimal> hist, int precision = c_defaultPrecision)
+        {
+            return new Pmf(hist, precision);
+        }
+
+        private static decimal Normalize(decimal value, int precision)
+        {
+            decimal multiple = (decimal)Math.Pow(10, precision);
+            return Math.Round(value * multiple) / multiple;
+        }
+
+        private const int c_defaultPrecision = 20;
     }
 }

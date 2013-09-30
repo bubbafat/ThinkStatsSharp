@@ -10,7 +10,7 @@ namespace ThinkStats.Tests
         [TestMethod]
         public void MakePmfFromListTest()
         {
-            Pmf<int> pmf = Pmf<int>.MakePmfFromList(new int[] {1, 2, 2, 3, 4});
+            Pmf pmf = Pmf.MakePmfFromList(new decimal[] {1, 2, 2, 3, 4});
 
             var values = pmf.Values().ToList();
             Assert.AreEqual(4, values.Count());
@@ -34,7 +34,7 @@ namespace ThinkStats.Tests
         [TestMethod]
         public void ThinkStatsSampleTest()
         {
-            Pmf<int> pmf = Pmf<int>.MakePmfFromList(new int[] { 1, 2, 2, 3, 5 });
+            Pmf pmf = Pmf.MakePmfFromList(new decimal[] { 1, 2, 2, 3, 5 });
             Assert.AreEqual((decimal)0.4, pmf.Prob(2));
             pmf.Incr(2, (decimal)0.2);
             Assert.AreEqual((decimal)0.6, pmf.Prob(2));
@@ -46,6 +46,16 @@ namespace ThinkStats.Tests
 
             pmf.Normalize();
             Assert.AreEqual((decimal)1.0, pmf.Total());
+        }
+
+        [TestMethod]
+        public void PmfMeanTests()
+        {
+            Pmf pmf = Pmf.MakePmfFromList(new decimal[] {1, 2, 3});
+            Assert.AreEqual((decimal)2, pmf.Mean());
+
+            pmf = Pmf.MakePmfFromList(new decimal[] { 5, 5, 20, 20, 0 });
+            Assert.AreEqual((decimal)10, pmf.Mean());
         }
     }
 }
